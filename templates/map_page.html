@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/html">
+
+
+<head>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <script>var JSON_data = {{ data | tojson | safe}};
+            if (JSON_data=="error"){window.location = "/"}
+    </script>
+    <script>
+
+    function create_id_array(json_data) {
+        ids = [];
+        for (let i = 0; i < json_data.length; i++) {
+        theobject={pinid:"pinid"+JSON_data[i]['city'], infoboxid:"infoboxid"+JSON_data[i]['city']};
+        ids.push(theobject)
+        }
+        return ids
+    }
+    function initMap(json_data) {
+        let text = "";
+        id_array=create_id_array(JSON_data)
+      const myLatLng = { lat: parseFloat(JSON_data[0]['latitude']), lng: parseFloat(JSON_data[0]['longitude']) };
+
+      const map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 4,
+        center: myLatLng,
+      });
+
+    for (let i = 0; i < JSON_data.length; i++) {
+        var latlng ={ lat: parseFloat(JSON_data[i]['latitude']), lng: parseFloat(JSON_data[i]['longitude']) }
+        id_array[i]['pinid']=new google.maps.Marker({
+        position: latlng,
+        map,
+        title: JSON_data[i]['city'],
+        })
+        formatted_date_array=[]
+        for (let x = 0; x < JSON_data[i]['date'].length; x++) {
+            date = JSON_data[i]['date'][x].replace(/-/g, ',')
+            date = new Date(date);
+            formatted_date=date.toDateString()
+            formatted_date_array.push(formatted_date);
+
+        }
+
+        formated_datetime_HTML=""
+        for (let x = 0; x < formatted_date_array.length; x++) {
+            formated_datetime_HTML=formated_datetime_HTML+String(formatted_date_array[x])+" "+
+            JSON_data[i]['time'][x]+
+            "<a href=\""+JSON_data[i]['url'][x]+
+            "\" class=\"button\">buy tickets</a><br>"
+        }
+
+
+        console.log(formated_datetime_HTML)
+        id_array[i]['infoboxid'] = new google.maps.InfoWindow({
+            content: '<div id="content">' +
+            '<div id="siteNotice">' +
+            "</div>" +
+            '<h1 id="firstHeading" class="firstHeading">' +
+                JSON_data[i]['venue']+
+            '</h1>' +
+            '<h2>'+
+                JSON_data[i]['city']+
+            '</h2>'+
+            '<div class="bodyContent">'+
+             formated_datetime_HTML+
+            '</>'
+        })
+
+
+
+
+        id_array[i]['pinid'].addListener("click", () => {
+        for (let i = 0; i < JSON_data.length; i++){
+            id_array[i]['infoboxid'].setMap(null)
+        }
+        id_array[i]['infoboxid'].open({
+          anchor: id_array[i]['pinid'],
+          map,
+          shouldFocus: false,
+        });
+        console.log(JSON_data[i]['time'])
+        })
+    };
+
+
+    }
+    </script>
+    <script src="/static/test_javascript.js" type="text/javascript">    </script>
+</head>
+<body>
+<div id="map" class="myDiv"></div>
+
+<!-- Async script executes immediately and must be after any DOM elements used in callback. -->
+<script
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCFxVosjlJCr4SzA19mEDhXqRCfRuFVilw&callback=initMap&v=weekly"
+  async
+></script>
+
+
+</body>
+</html>
